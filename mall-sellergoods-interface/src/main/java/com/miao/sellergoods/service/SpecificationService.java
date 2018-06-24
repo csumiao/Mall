@@ -1,5 +1,7 @@
 package com.miao.sellergoods.service;
 import java.util.List;
+import java.util.Map;
+
 import com.miao.pojo.TbSpecification;
 import com.miao.pojogroup.Specification;
 
@@ -59,4 +61,6 @@ public interface SpecificationService {
 	 */
 	public PageResult findPage(TbSpecification specification, int pageNum,int pageSize);
 	
+	
+	public List<Map> selectOptionList();
 }
