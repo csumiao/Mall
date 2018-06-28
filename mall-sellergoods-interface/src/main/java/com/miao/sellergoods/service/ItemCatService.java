@@ -1,10 +1,11 @@
 package com.miao.sellergoods.service;
 import java.util.List;
 import com.miao.pojo.TbItemCat;
+import com.sun.javafx.binding.Logging;
 
 import entity.PageResult;
 /**
- * 服务层接口
+ * 商品分类服务层接口
  * @author Administrator
  *
  */
@@ -57,5 +58,12 @@ public interface ItemCatService {
 	 * @return
 	 */
 	public PageResult findPage(TbItemCat itemCat, int pageNum,int pageSize);
+	
+	/**
+	 * 根据上级id查询分类列表
+	 * @param parentId
+	 * @return
+	 */
+	public List<TbItemCat> findByParentId(Long parentId);
 	
 }

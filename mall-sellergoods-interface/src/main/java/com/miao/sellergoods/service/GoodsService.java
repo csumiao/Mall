@@ -1,6 +1,7 @@
 package com.miao.sellergoods.service;
 import java.util.List;
 import com.miao.pojo.TbGoods;
+import com.miao.pojogroup.Goods;
 
 import entity.PageResult;
 /**
@@ -27,7 +28,7 @@ public interface GoodsService {
 	/**
 	 * 增加
 	*/
-	public void add(TbGoods goods);
+	public void add(Goods goods);
 	
 	
 	/**
