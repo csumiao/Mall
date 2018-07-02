@@ -1,5 +1,5 @@
  //控制层 
-app.controller('goodsController' ,function($scope,$controller,goodsService,uploadService,itemCatService,typeTemplateService){	
+app.controller('goodsController' ,function($scope,$controller,$location,goodsService,uploadService,itemCatService,typeTemplateService){	
 	
 	$controller('baseController',{$scope:$scope});//继承
 	
@@ -23,10 +23,22 @@ app.controller('goodsController' ,function($scope,$controller,goodsService,uploa
 	}
 	
 	//查询实体 
-	$scope.findOne=function(id){				
+	$scope.findOne=function(id){
+		
+		var id = $location.search()['id'];//获取参数值
+		if(id==null){
+			return ; 
+		}
 		goodsService.findOne(id).success(
 			function(response){
-				$scope.entity= response;					
+				$scope.entity= response;
+				editor.html($scope.entity.goodsDesc.introduction);//商品介绍
+				//商品图片
+				$scope.entity.goodsDesc.itemImages = JSON.parse($scope.entity.goodsDesc.itemImages);
+				//扩展属性
+				$scope.entity.goodsDesc.customAttributeItems= JSON.parse($scope.entity.goodsDesc.customAttributeItems);
+				//规格				
+				$scope.entity.goodsDesc.specificationItems=JSON.parse($scope.entity.goodsDesc.specificationItems);	
 			}
 		);				
 	}
@@ -148,7 +160,10 @@ app.controller('goodsController' ,function($scope,$controller,goodsService,uploa
        			  $scope.typeTemplate=response;//获取类型模板
        			  $scope.typeTemplate.brandIds= JSON.parse( $scope.typeTemplate.brandIds);//品 牌列表
        			  //扩展属性
-       			  $scope.entity.goodsDesc.customAttributeItems=JSON.parse( $scope.typeTemplate.customAttributeItems);
+       			  if($location.search()['id']==null){
+       				$scope.entity.goodsDesc.customAttributeItems=JSON.parse( $scope.typeTemplate.customAttributeItems);
+       			  }
+       			  
        		} 
     	);
     	
@@ -203,5 +218,36 @@ app.controller('goodsController' ,function($scope,$controller,goodsService,uploa
     	} 		
     	return newList;
     }
+    
+    $scope.status=['未审核', '审核通过', '审核未通过', '已关闭'];
+    
+    $scope.itemCatList=[];//商品分类列表
+    //查询商品分类
+    $scope.findItemCatList=function(){
+    	itemCatService.findAll().success(
+    		function(response){
+    			for(var i=0;i<response.length;i++){
+    				$scope.itemCatList[response[i].id] = response[i].name;
+    			}
+    		}	
+    	);
+    }
+    
+    //规格选择
+    $scope.checkAttributeValue=function(specName,optionName){
+    	var items= $scope.entity.goodsDesc.specificationItems;
+    	var object= $scope.searchObjectByKey(items,'attributeName',specName);
+    	if(object==null){
+    		return false;
+    	}else{
+    		if(object.attributeValue.indexOf(optionName)>=0){
+    			return true;
+    		}else{
+    			return false;
+    		}
+    	}			
+    }
+    
+    
     
 });	

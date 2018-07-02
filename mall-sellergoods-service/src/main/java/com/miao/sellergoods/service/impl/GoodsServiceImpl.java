@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.Page;
@@ -16,10 +18,12 @@ import com.miao.mapper.TbItemMapper;
 import com.miao.mapper.TbSellerMapper;
 import com.miao.pojo.TbBrand;
 import com.miao.pojo.TbGoods;
+import com.miao.pojo.TbGoodsDesc;
 import com.miao.pojo.TbGoodsExample;
 import com.miao.pojo.TbGoodsExample.Criteria;
 import com.miao.pojo.TbItem;
 import com.miao.pojo.TbItemCat;
+import com.miao.pojo.TbItemExample;
 import com.miao.pojo.TbSeller;
 import com.miao.pojogroup.Goods;
 import com.miao.sellergoods.service.GoodsService;
@@ -32,6 +36,7 @@ import entity.PageResult;
  *
  */
 @Service
+@Transactional
 public class GoodsServiceImpl implements GoodsService {
 
 	@Autowired
@@ -64,6 +69,7 @@ public class GoodsServiceImpl implements GoodsService {
 	public PageResult findPage(int pageNum, int pageSize) {
 		PageHelper.startPage(pageNum, pageSize);		
 		Page<TbGoods> page=   (Page<TbGoods>) goodsMapper.selectByExample(null);
+		
 		return new PageResult(page.getTotal(), page.getResult());
 	}
 
@@ -164,8 +170,24 @@ public class GoodsServiceImpl implements GoodsService {
 	 * @return
 	 */
 	@Override
-	public TbGoods findOne(Long id){
-		return goodsMapper.selectByPrimaryKey(id);
+	public Goods findOne(Long id){
+		Goods goods = new Goods();
+		//商品基本表
+		TbGoods tbGoods = goodsMapper.selectByPrimaryKey(id);
+		goods.setGoods(tbGoods);
+		//商品扩展表
+		TbGoodsDesc goodsDesc = goodsDescMapper.selectByPrimaryKey(id);
+		goods.setGoodsDesc(goodsDesc);
+		
+		
+		//读取SPU列表
+		TbItemExample example = new TbItemExample();
+		com.miao.pojo.TbItemExample.Criteria createCriteria = example.createCriteria();
+		createCriteria.andGoodsIdEqualTo(id);
+		
+		List<TbItem> selectByExample = itemMapper.selectByExample(example);
+		goods.setItemList(selectByExample);
+		return goods;
 	}
 
 	/**
@@ -174,7 +196,11 @@ public class GoodsServiceImpl implements GoodsService {
 	@Override
 	public void delete(Long[] ids) {
 		for(Long id:ids){
-			goodsMapper.deleteByPrimaryKey(id);
+			
+			TbGoods goods = goodsMapper.selectByPrimaryKey(id);
+			goods.setIsDelete("1");//表示逻辑删除
+			goodsMapper.updateByPrimaryKey(goods);
+			
 		}		
 	}
 	
@@ -186,9 +212,11 @@ public class GoodsServiceImpl implements GoodsService {
 		TbGoodsExample example=new TbGoodsExample();
 		Criteria criteria = example.createCriteria();
 		
+		criteria.andIsDeleteIsNull();//非删除状态
+		
 		if(goods!=null){			
 						if(goods.getSellerId()!=null && goods.getSellerId().length()>0){
-				criteria.andSellerIdLike("%"+goods.getSellerId()+"%");
+				criteria.andSellerIdLike(goods.getSellerId());
 			}
 			if(goods.getGoodsName()!=null && goods.getGoodsName().length()>0){
 				criteria.andGoodsNameLike("%"+goods.getGoodsName()+"%");
@@ -217,6 +245,16 @@ public class GoodsServiceImpl implements GoodsService {
 		Page<TbGoods> page= (Page<TbGoods>)goodsMapper.selectByExample(example);		
 		return new PageResult(page.getTotal(), page.getResult());
 	}
+
+		@Override
+		public void updateStatus(Long[] ids, String status) {
+			for(Long id : ids){
+				TbGoods goods = goodsMapper.selectByPrimaryKey(id);
+				goods.setAuditStatus(status);
+				goodsMapper.updateByPrimaryKey(goods);
+				
+			}
+		}
 		
 		
 	
